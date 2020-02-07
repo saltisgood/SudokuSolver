@@ -14,6 +14,8 @@ namespace SudokuSolver
     public partial class Form1 : Form
     {
         private readonly TextBox[] mTextBoxes = new TextBox[81];
+        private List<TextBox> mFixedBoxes = null;
+        private List<TextBox> mDynamicBoxes = null;
  
         public Form1()
         {
@@ -120,6 +122,16 @@ namespace SudokuSolver
             DoSolve();
         }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            DoReset();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            DoClear();
+        }
+
         private class TextBoxCellWatcher : Game.Solver.IGameWatcher
         {
             private readonly TextBox[] mTextBoxes;
@@ -140,18 +152,38 @@ namespace SudokuSolver
 
         private void DoSolve()
         {
-            Game.Game game = new Game.Game();
-            SetupGame(game);
-            Solve(game);
+            try
+            {
+                button1.Enabled = false;
+                Game.Game game = new Game.Game();
+                SetupGame(game);
+                Solve(game);
+            }
+            finally
+            {
+                button1.Enabled = true;
+                button2.Enabled = true;
+            }
         }
 
         private void SetupGame(Game.Game game)
         {
+            mFixedBoxes = new List<TextBox>();
+            mDynamicBoxes = new List<TextBox>();
             for (int i = 0; i < mTextBoxes.Length; ++i)
             {
-                if (mTextBoxes[i].Text.Length > 0)
+                TextBox textBox = mTextBoxes[i];
+                textBox.Enabled = false;
+
+                if (textBox.Text.Length > 0)
                 {
-                    game.SetFixedValue(Game.Game.GetIndexPosition(i), int.Parse(mTextBoxes[i].Text));
+                    mFixedBoxes.Add(textBox);
+                    textBox.Font = new Font(textBox.Font, FontStyle.Bold);
+                    game.SetFixedValue(Game.Game.GetIndexPosition(i), int.Parse(textBox.Text));
+                }
+                else
+                {
+                    mDynamicBoxes.Add(textBox);
                 }
             }
         }
@@ -171,6 +203,37 @@ namespace SudokuSolver
                 text = "Aww";
             }
             MessageBox.Show(text);
+        }
+
+        private void DoReset()
+        {
+            foreach (var textBox in mFixedBoxes)
+            {
+                textBox.Enabled = true;
+                textBox.Font = new Font(textBox.Font, FontStyle.Regular);
+            }
+            foreach (var textBox in mDynamicBoxes)
+            {
+                textBox.Enabled = true;
+                textBox.Text = "";
+            }
+
+            mFixedBoxes = null;
+            mDynamicBoxes = null;
+            button2.Enabled = false;
+        }
+
+        private void DoClear()
+        {
+            mFixedBoxes = null;
+            mDynamicBoxes = null;
+
+            foreach (var textBox in mTextBoxes)
+            {
+                textBox.Enabled = true;
+                textBox.Font = new Font(textBox.Font, FontStyle.Regular);
+                textBox.Text = "";
+            }
         }
     }
 }
